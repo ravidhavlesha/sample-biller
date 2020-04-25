@@ -1,5 +1,6 @@
 const apiResponse = require('../utils/apiResponse');
-const billsModel = require('../models/billsModel');
+const customerModel = require('../models/customerModel');
+const billModel = require('../models/billModel');
 
 /**
  * Fetch bills by customer attribute
@@ -14,35 +15,20 @@ exports.fetchBills = async (req, res) => {
       return apiResponse.errorResponse(res, 400, { title: 'Bad Request', description: 'Invalid attribute name' });
     }
 
-    const bill = await billsModel.findOne(
-      { [`customer.${attributeName}`]: attributeValue },
-      {
-        _id: false,
-        'customer.name': true,
-        'bills.customerAccount': true,
-        'bills.aggregates': true,
-        'bills.billerBillID': true,
-        'bills.generatedOn': true,
-        'bills.recurrence': true,
-        'bills.amountExactness': true,
-      }
-    );
-
-    if (!bill) {
-      return apiResponse.errorResponse(res, 404, {
-        code: 'customer-not-found',
-        title: 'Customer not found',
-        traceID: '',
-        description: 'The requested customer was not found in the biller system.',
-        param: '',
-        docURL: '',
+    const customerAndBills = await customerModel
+      .findOne({ [attributeName]: attributeValue }, { _id: false, name: true })
+      .populate({
+        path: 'bills',
+        select: '-_id customerAccount aggregates billerBillID generatedOn recurrence amountExactness',
       });
-    } else {
-      const { customer, bills } = bill;
-      const billFetchStatus = bill.bills && bill.bills.length ? 'AVAILABLE' : 'NO_OUTSTANDING';
 
-      return apiResponse.successResponse(res, 200, { customer, billFetchStatus, bills });
+    if (!customerAndBills) {
+      return apiResponse.dataNotFoundResponse(res, 'Customer');
     }
+
+    const { name, bills } = customerAndBills;
+    const billFetchStatus = bills && bills.length ? 'AVAILABLE' : 'NO_OUTSTANDING';
+    return apiResponse.successResponse(res, 200, { customer: { name }, billFetchStatus, bills });
   } catch (err) {
     console.error(`Error: ${err.message}`);
     return apiResponse.serverErrorResponse(res);
@@ -52,6 +38,84 @@ exports.fetchBills = async (req, res) => {
 /**
  * Fetch bill receipt by bill ID
  */
-exports.fetchBillReceipt = (req, res) => {
-  res.send('Fetch bill receipt route');
+exports.fetchBillReceipt = async (req, res) => {
+  try {
+    const { billerBillID, ...paymentDetails } = req.body || {};
+
+    const bill = await billModel.findOne({ billerBillID }, { _id: true, payment: true });
+
+    if (!bill) {
+      return apiResponse.dataNotFoundResponse(res, 'Bill');
+    }
+
+    if (bill.payment && bill.payment.platformBillID && Object.values(bill.payment).length) {
+      return apiResponse.errorResponse(res, 400, {
+        title: 'Bad Request',
+        description: 'Payment already made for this bill',
+      });
+    }
+
+    const billPayment = {
+      ...paymentDetails,
+      receipt: {
+        receiptID: Math.random().toString(36).slice(2).toUpperCase(),
+        receiptDate: new Date(),
+      },
+    };
+
+    bill.payment = billPayment;
+    await bill.save();
+
+    return apiResponse.successResponse(res, 200, billPayment);
+  } catch (err) {
+    console.error(`Error: ${err.message}`);
+    return apiResponse.serverErrorResponse(res);
+  }
 };
+
+/**
+ * Create customer and bills
+ */
+// const mongoose = require('mongoose');
+// exports.createBills = async (req, res) => {
+//   try {
+//     const customer = new customerModel({
+//       _id: new mongoose.Types.ObjectId(),
+//       name: 'Ravi Dhavlesha',
+//       mobileNumber: '9000000001',
+//     });
+
+//     customer.save(async () => {
+//       const bill1 = await new billModel({
+//         aggregates: { total: { amount: { value: 99000 }, displayName: 'Total Outstanding' } },
+//         billerBillID: 10000001,
+//         generatedOn: '2019-08-01T08:28:12Z',
+//         recurrence: 'ONE_TIME',
+//         amountExactness: 'EXACT',
+//         customerAccount: { id: 8208021440 },
+//         customer: customer._id,
+//       }).save();
+
+//       customer.bills.push(bill1);
+
+//       const bill2 = await new billModel({
+//         aggregates: { total: { amount: { value: 88000 }, displayName: 'Total Outstanding' } },
+//         billerBillID: 10000002,
+//         generatedOn: '2019-08-02T08:28:12Z',
+//         recurrence: 'ONE_TIME',
+//         amountExactness: 'EXACT',
+//         customerAccount: { id: 8208021440 },
+//         customer: customer._id,
+//       }).save();
+
+//       customer.bills.push(bill2);
+
+//       customer.save();
+//     });
+
+//     return res.send('Done');
+//   } catch (err) {
+//     console.error(`Error: ${err.message}`);
+//     return apiResponse.serverErrorResponse(res);
+//   }
+// };

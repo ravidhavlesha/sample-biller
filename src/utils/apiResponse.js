@@ -1,4 +1,4 @@
-exports.successResponse = (res, statusCode = 200, data = []) => {
+const successResponse = (res, statusCode = 200, data = []) => {
   let response = { status: statusCode, success: true };
 
   if (data && Object.keys(data).length) {
@@ -8,7 +8,7 @@ exports.successResponse = (res, statusCode = 200, data = []) => {
   return res.status(statusCode).json(response);
 };
 
-exports.errorResponse = (res, statusCode = 400, error = {}) => {
+const errorResponse = (res, statusCode = 400, error = {}) => {
   let response = { status: statusCode, success: false };
 
   if (error && Object.keys(error).length) {
@@ -21,7 +21,7 @@ exports.errorResponse = (res, statusCode = 400, error = {}) => {
   return res.status(statusCode).json(response);
 };
 
-exports.serverErrorResponse = (res, statusCode = 500) => {
+const serverErrorResponse = (res, statusCode = 500) => {
   const response = {
     status: statusCode,
     success: false,
@@ -30,3 +30,16 @@ exports.serverErrorResponse = (res, statusCode = 500) => {
 
   return res.status(statusCode).json(response);
 };
+
+const dataNotFoundResponse = (res, model) => {
+  return errorResponse(res, 404, {
+    code: `${model.toLowerCase()}-not-found`,
+    title: `${model} not found`,
+    traceID: '',
+    description: `The requested ${model.toLowerCase()} was not found in the biller system.`,
+    param: '',
+    docURL: '',
+  });
+};
+
+module.exports = { successResponse, errorResponse, dataNotFoundResponse, serverErrorResponse };
