@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "builds": [{ "src": "src/index.js", "use": "@now/node-server" }],
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/src/index.js",
+      "methods": ["GET"]
+    },
+    {
+      "src": "/bills/fetch",
+      "dest": "/src/index.js",
+      "methods": ["POST"]
+    },
+    {
+      "src": "/bills/fetchReceipt",
+      "dest": "/src/index.js",
+      "methods": ["POST"]
+    }
+  ]
+}
