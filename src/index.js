@@ -15,3 +15,9 @@ const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log(`Biller system is listening on port ${port}`);
 });
+
+app.use((err, req, res, next) => {
+  if (err.name === 'UnauthorizedError') {
+    res.send('Authentication failed!');
+  }
+});
