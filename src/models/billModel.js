@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 const billSchema = new Schema(
   {
@@ -40,7 +40,7 @@ const billSchema = new Schema(
       },
     },
   },
-  { collection: 'bills' }
+  { collection: 'bills' },
 );
 
 module.exports = mongoose.model('Bill', billSchema);

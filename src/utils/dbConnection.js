@@ -5,7 +5,7 @@ const dbConfig = { useNewUrlParser: true, useUnifiedTopology: true, useCreateInd
 const dbConnection = mongoose
   .connect(process.env.MONGO_URI || '', dbConfig)
   .then((conn) => {
-    console.log(`Successfully connected to mongo`);
+    console.log('Successfully connected to mongo');
     return conn;
   })
   .catch((err) => {

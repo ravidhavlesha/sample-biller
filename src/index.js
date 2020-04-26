@@ -20,11 +20,9 @@ app.listen(port, () => {
   console.log(`Biller system is listening on port ${port}`);
 });
 
-app.all('*', (req, res) => {
-  return apiResponse.errorResponse(res, 404, { title: 'Page not found' });
-});
+app.all('*', (req, res) => apiResponse.errorResponse(res, 404, { title: 'Page not found' }));
 
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   if (err.name === 'UnauthorizedError') {
     console.log('Error: Authentication failed');
     return apiResponse.errorResponse(res, 401, { title: 'Authentication failed' });

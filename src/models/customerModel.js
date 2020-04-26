@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 const customerSchema = new Schema(
   {
@@ -13,7 +13,7 @@ const customerSchema = new Schema(
       },
     ],
   },
-  { collection: 'customers' }
+  { collection: 'customers' },
 );
 
 module.exports = mongoose.model('Customer', customerSchema);
