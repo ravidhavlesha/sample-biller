@@ -1,7 +1,7 @@
 {
   "name": "sample-biller",
   "version": "1.0.0",
-  "description": "",
+  "description": "A sample biller system implementation using NodeJS and MongoDB hosted on Vercel.",
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
@@ -20,5 +20,9 @@
   },
   "devDependencies": {
     "nodemon": "^2.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ravidhavlesha/sample-biller.git"
   }
 }
