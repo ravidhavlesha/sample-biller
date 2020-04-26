@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const apiResponse = require('../utils/apiResponse');
 const customerModel = require('../models/customerModel');
 const billModel = require('../models/billModel');
@@ -42,9 +43,22 @@ exports.fetchBillReceipt = async (req, res) => {
   try {
     const { billerBillID, ...paymentDetails } = req.body || {};
 
-    console.log("Fetch bill receipt started");
+    mongoose.Promise = global.Promise;
+
+    const dbConfig = { useNewUrlParser: true, /*useUnifiedTopology: true,*/ useCreateIndex: true };
+
+    console.log(`Started mongo connection`);
+    await mongoose
+      .connect(process.env.MONGO_URI || '', dbConfig)
+      .then((conn) => {
+        console.log(`Successfully connected to mongo`);
+        return conn;
+      })
+      .catch((err) => {
+        console.error(`Error while attempting to connect to mongo with message: ${err.message}`);
+      });
+
     const bill = await billModel.findOne({ billerBillID }, { _id: true, payment: true });
-    console.log("Fetch bill receipt ended");
 
     if (!bill) {
       return apiResponse.dataNotFoundResponse(res, 'Bill');
