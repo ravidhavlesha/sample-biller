@@ -42,7 +42,9 @@ exports.fetchBillReceipt = async (req, res) => {
   try {
     const { billerBillID, ...paymentDetails } = req.body || {};
 
+    console.log("Fetch bill receipt started");
     const bill = await billModel.findOne({ billerBillID }, { _id: true, payment: true });
+    console.log("Fetch bill receipt ended");
 
     if (!bill) {
       return apiResponse.dataNotFoundResponse(res, 'Bill');
