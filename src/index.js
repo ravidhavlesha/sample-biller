@@ -22,12 +22,21 @@ app.listen(port, () => {
 
 app.all('*', (req, res) => apiResponse.errorResponse(res, 404, { title: 'Page not found' }));
 
-app.use((err, req, res) => {
+app.use((err, req, res, next) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+
   if (err.name === 'UnauthorizedError') {
-    console.log('Error: Authentication failed');
+    console.error('Error: Authentication failed');
     return apiResponse.errorResponse(res, 401, { title: 'Authentication failed' });
   }
 
-  console.log(`Error: ${err.message || ''}`);
+  if (err.statusCode && err.statusCode === 400) {
+    return apiResponse.badRequestResponse(res);
+  }
+
+  console.error(`Error: ${err.message || ''}`);
+  console.error(`Stack: ${err.stack || null}`);
   return apiResponse.serverErrorResponse(res);
 });

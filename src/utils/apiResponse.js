@@ -31,6 +31,12 @@ const serverErrorResponse = (res, statusCode = 500) => {
   return res.status(statusCode).json(response);
 };
 
+const badRequestResponse = (res, desc = null) => errorResponse(res, 400, {
+  code: 'bad-request',
+  title: 'Bad request',
+  description: desc || 'The requested payload is invalid.',
+});
+
 const dataNotFoundResponse = (res, model) => errorResponse(res, 404, {
   code: `${model.toLowerCase()}-not-found`,
   title: `${model} not found`,
@@ -43,6 +49,7 @@ const dataNotFoundResponse = (res, model) => errorResponse(res, 404, {
 module.exports = {
   successResponse,
   errorResponse,
+  badRequestResponse,
   dataNotFoundResponse,
   serverErrorResponse,
 };

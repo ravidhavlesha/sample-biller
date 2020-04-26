@@ -1,3 +1,4 @@
+const Joi = require('joi');
 const apiResponse = require('../utils/apiResponse');
 const customerModel = require('../models/customerModel');
 const billModel = require('../models/billModel');
@@ -5,15 +6,30 @@ const billModel = require('../models/billModel');
 /**
  * Fetch bills by customer attribute
  */
-exports.fetchBills = async (req, res) => {
+exports.fetchBills = async (req, res, next) => {
   try {
+    const validationSchema = Joi.object()
+      .keys({
+        customerIdentifiers: Joi.array()
+          .items(
+            Joi.object()
+              .keys({
+                attributeName: Joi.string().valid(['name', 'mobileNumber']),
+                attributeValue: Joi.number().required(),
+              })
+              .required(),
+          )
+          .required(),
+      })
+      .required();
+
+    const { error } = Joi.validate(req.body, validationSchema);
+    if (error) {
+      return apiResponse.badRequestResponse(res);
+    }
+
     const { customerIdentifiers } = req.body || {};
     const { attributeName, attributeValue } = (customerIdentifiers && customerIdentifiers[0]) || {};
-
-    const validAttributes = ['name', 'mobileNumber'];
-    if (validAttributes.indexOf(attributeName) < 0) {
-      return apiResponse.errorResponse(res, 400, { title: 'Bad Request', description: 'Invalid attribute name' });
-    }
 
     const customerAndBills = await customerModel
       .findOne({ [attributeName]: attributeValue }, { _id: false, name: true })
@@ -31,16 +47,41 @@ exports.fetchBills = async (req, res) => {
     const billFetchStatus = bills && bills.length ? 'AVAILABLE' : 'NO_OUTSTANDING';
     return apiResponse.successResponse(res, 200, { customer: { name }, billFetchStatus, bills });
   } catch (err) {
-    console.error(`Error: ${err.message}`);
-    return apiResponse.serverErrorResponse(res);
+    return next(err);
   }
 };
 
 /**
  * Fetch bill receipt by bill ID
  */
-exports.fetchBillReceipt = async (req, res) => {
+exports.fetchBillReceipt = async (req, res, next) => {
   try {
+    const validationSchema = Joi.object().keys({
+      billerBillID: Joi.number().required(),
+      platformBillID: Joi.number().required(),
+      paymentDetails: Joi.object()
+        .keys({
+          platformTransactionRefID: Joi.number().required(),
+          uniquePaymentRefID: Joi.number().required(),
+          amountPaid: Joi.object()
+            .keys({
+              value: Joi.number().required(),
+            })
+            .required(),
+          billAmount: Joi.object()
+            .keys({
+              value: Joi.number().required(),
+            })
+            .required(),
+        })
+        .required(),
+    });
+
+    const { error } = Joi.validate(req.body, validationSchema);
+    if (error) {
+      return apiResponse.badRequestResponse(res);
+    }
+
     const { billerBillID, platformBillID, paymentDetails } = req.body || {};
     const { platformTransactionRefID } = paymentDetails;
 
@@ -52,10 +93,7 @@ exports.fetchBillReceipt = async (req, res) => {
 
     // We can also add this outstanding check in query but added here for specific message.
     if (bill.billStatus && bill.billStatus !== 'OUTSTANDING') {
-      return apiResponse.errorResponse(res, 400, {
-        title: 'Bad Request',
-        description: 'The requested bill was already paid in the biller system.',
-      });
+      return apiResponse.badRequestResponse(res, 'The requested bill was already paid in the biller system.');
     }
 
     const billPayment = {
@@ -79,8 +117,7 @@ exports.fetchBillReceipt = async (req, res) => {
     };
     return apiResponse.successResponse(res, 200, billPaymentResponse);
   } catch (err) {
-    console.error(`Error: ${err.message}`);
-    return apiResponse.serverErrorResponse(res);
+    return next(err);
   }
 };
 
@@ -88,7 +125,7 @@ exports.fetchBillReceipt = async (req, res) => {
  * Create customer and bills
  */
 // const mongoose = require('mongoose');
-// exports.createBills = async (req, res) => {
+// exports.createBills = async (req, res, next) => {
 //   try {
 //     const customer = new customerModel({
 //       _id: new mongoose.Types.ObjectId(),
@@ -126,7 +163,6 @@ exports.fetchBillReceipt = async (req, res) => {
 
 //     return res.send('Done');
 //   } catch (err) {
-//     console.error(`Error: ${err.message}`);
-//     return apiResponse.serverErrorResponse(res);
+//     next(err);
 //   }
 // };
