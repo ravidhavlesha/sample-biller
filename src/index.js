@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
 
+require('./utils/dbConnection');
 const apiResponse = require('./utils/apiResponse');
 
 const billsRoute = require('./routes/billsRoute');
@@ -16,8 +17,6 @@ app.use('/bills', billsRoute);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  require('./utils/dbConnection');
-
   console.log(`Biller system is listening on port ${port}`);
 });
 
