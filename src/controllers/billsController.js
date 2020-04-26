@@ -19,6 +19,7 @@ exports.fetchBills = async (req, res) => {
       .findOne({ [attributeName]: attributeValue }, { _id: false, name: true })
       .populate({
         path: 'bills',
+        match: { billStatus: 'OUTSTANDING' },
         select: '-_id customerAccount aggregates billerBillID generatedOn recurrence amountExactness',
       });
 
@@ -63,6 +64,7 @@ exports.fetchBillReceipt = async (req, res) => {
       },
     };
 
+    bill.billStatus = 'PAID';
     bill.payment = billPayment;
     await bill.save();
 

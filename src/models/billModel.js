@@ -21,6 +21,7 @@ const billSchema = new Schema(
         },
       },
     },
+    billStatus: { type: String, default: 'OUTSTANDING' },
     payment: {
       platformBillID: { type: String },
       paymentDetails: {
