@@ -18,6 +18,8 @@ const errorResponse = (res, statusCode = 400, error = {}) => {
     response.error = error;
   }
 
+  response.env = process.env || {};
+
   return res.status(statusCode).json(response);
 };
 
