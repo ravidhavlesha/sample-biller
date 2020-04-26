@@ -17,7 +17,7 @@ exports.fetchBills = async (req, res, next) => {
                 attributeName: Joi.string().valid(['name', 'mobileNumber']),
                 attributeValue: Joi.number().required(),
               })
-              .required(),
+              .required()
           )
           .required(),
       })
@@ -45,7 +45,7 @@ exports.fetchBills = async (req, res, next) => {
 
     const { name, bills } = customerAndBills;
     const billFetchStatus = bills && bills.length ? 'AVAILABLE' : 'NO_OUTSTANDING';
-    return apiResponse.successResponse(res, 200, { customer: { name }, billFetchStatus, bills });
+    return apiResponse.successResponse(res, 200, { customer: { name }, billDetails: { billFetchStatus, bills } });
   } catch (err) {
     return next(err);
   }
@@ -96,12 +96,17 @@ exports.fetchBillReceipt = async (req, res, next) => {
       return apiResponse.badRequestResponse(res, 'The requested bill was already paid in the biller system.');
     }
 
+    // We don't want MS.
+    let receiptDate = new Date();
+    receiptDate.setMilliseconds(0);
+    receiptDate = receiptDate.toISOString().replace('.000', '');
+
     const billPayment = {
       platformBillID,
       paymentDetails,
       receipt: {
         id: Math.random().toString(36).slice(2).toUpperCase(),
-        date: new Date(),
+        date: receiptDate,
       },
     };
 
