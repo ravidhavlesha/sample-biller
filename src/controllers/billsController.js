@@ -41,26 +41,29 @@ exports.fetchBills = async (req, res) => {
  */
 exports.fetchBillReceipt = async (req, res) => {
   try {
-    const { billerBillID, ...paymentDetails } = req.body || {};
+    const { billerBillID, platformBillID, paymentDetails } = req.body || {};
+    const { platformTransactionRefID } = paymentDetails;
 
-    const bill = await billModel.findOne({ billerBillID }, { _id: true, payment: true });
+    const bill = await billModel.findOne({ billerBillID }, { _id: true, billStatus: true });
 
     if (!bill) {
       return apiResponse.dataNotFoundResponse(res, 'Bill');
     }
 
-    if (bill.payment && bill.payment.platformBillID && Object.values(bill.payment).length) {
+    // We can also add this outstanding check in query but added here for specific message.
+    if (bill.billStatus && bill.billStatus !== 'OUTSTANDING') {
       return apiResponse.errorResponse(res, 400, {
         title: 'Bad Request',
-        description: 'Payment already made for this bill',
+        description: 'The requested bill was already paid in the biller system.',
       });
     }
 
     const billPayment = {
-      ...paymentDetails,
+      platformBillID,
+      paymentDetails,
       receipt: {
-        receiptID: Math.random().toString(36).slice(2).toUpperCase(),
-        receiptDate: new Date(),
+        id: Math.random().toString(36).slice(2).toUpperCase(),
+        date: new Date(),
       },
     };
 
@@ -68,7 +71,13 @@ exports.fetchBillReceipt = async (req, res) => {
     bill.payment = billPayment;
     await bill.save();
 
-    return apiResponse.successResponse(res, 200, billPayment);
+    const billPaymentResponse = {
+      billerBillID,
+      platformBillID,
+      platformTransactionRefID,
+      receipt: billPayment.receipt,
+    };
+    return apiResponse.successResponse(res, 200, billPaymentResponse);
   } catch (err) {
     console.error(`Error: ${err.message}`);
     return apiResponse.serverErrorResponse(res);

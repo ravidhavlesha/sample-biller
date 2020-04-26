@@ -35,8 +35,8 @@ const billSchema = new Schema(
         },
       },
       receipt: {
-        receiptID: { type: String },
-        receiptDate: { type: Date },
+        id: { type: String },
+        date: { type: Date },
       },
     },
   },

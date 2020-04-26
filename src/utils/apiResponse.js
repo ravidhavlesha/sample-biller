@@ -41,5 +41,8 @@ const dataNotFoundResponse = (res, model) => errorResponse(res, 404, {
 });
 
 module.exports = {
-  successResponse, errorResponse, dataNotFoundResponse, serverErrorResponse,
+  successResponse,
+  errorResponse,
+  dataNotFoundResponse,
+  serverErrorResponse,
 };
