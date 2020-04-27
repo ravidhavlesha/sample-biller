@@ -17,7 +17,7 @@ exports.fetchBills = async (req, res, next) => {
                 attributeName: Joi.string().valid(['name', 'mobileNumber']),
                 attributeValue: Joi.number().required(),
               })
-              .required()
+              .required(),
           )
           .required(),
       })
@@ -130,34 +130,41 @@ exports.fetchBillReceipt = async (req, res, next) => {
  * Create customer and bills
  */
 // const mongoose = require('mongoose');
+
 // exports.createBills = async (req, res, next) => {
 //   try {
 //     const customer = new customerModel({
 //       _id: new mongoose.Types.ObjectId(),
-//       name: 'Ravi Dhavlesha',
-//       mobileNumber: '9000000001',
+//       name: 'Thor',
+//       mobileNumber: Math.floor(Math.random() * 1000000000),
 //     });
 
 //     customer.save(async () => {
+//       const customerAccID = Math.floor(Math.random() * 10000000);
+
 //       const bill1 = await new billModel({
-//         aggregates: { total: { amount: { value: 99000 }, displayName: 'Total Outstanding' } },
-//         billerBillID: 10000001,
-//         generatedOn: '2019-08-01T08:28:12Z',
+//         aggregates: {
+//           total: { amount: { value: Math.floor(Math.random() * 100000) }, displayName: 'Total Outstanding' },
+//         },
+//         billerBillID: Math.floor(Math.random() * 100000000),
+//         generatedOn: '2020-01-19T01:02:03Z',
 //         recurrence: 'ONE_TIME',
 //         amountExactness: 'EXACT',
-//         customerAccount: { id: 8208021440 },
+//         customerAccount: { id: customerAccID },
 //         customer: customer._id,
 //       }).save();
 
 //       customer.bills.push(bill1);
 
 //       const bill2 = await new billModel({
-//         aggregates: { total: { amount: { value: 88000 }, displayName: 'Total Outstanding' } },
-//         billerBillID: 10000002,
-//         generatedOn: '2019-08-02T08:28:12Z',
+//         aggregates: {
+//           total: { amount: { value: Math.floor(Math.random() * 100000) }, displayName: 'Total Outstanding' },
+//         },
+//         billerBillID: Math.floor(Math.random() * 100000000),
+//         generatedOn: '2020-01-20T01:02:03Z',
 //         recurrence: 'ONE_TIME',
 //         amountExactness: 'EXACT',
-//         customerAccount: { id: 8208021440 },
+//         customerAccount: { id: customerAccID },
 //         customer: customer._id,
 //       }).save();
 
@@ -168,6 +175,6 @@ exports.fetchBillReceipt = async (req, res, next) => {
 
 //     return res.send('Done');
 //   } catch (err) {
-//     next(err);
+//     return next(err);
 //   }
 // };
