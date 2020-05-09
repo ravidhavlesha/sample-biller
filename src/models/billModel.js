@@ -10,7 +10,7 @@ const billSchema = new Schema(
     },
     customerAccount: { id: { type: Number } },
     billerBillID: { type: Number },
-    generatedOn: { type: String },
+    generatedOn: { type: Date },
     recurrence: { type: String },
     amountExactness: { type: String },
     aggregates: {
@@ -40,7 +40,7 @@ const billSchema = new Schema(
       },
     },
   },
-  { collection: 'bills' }
+  { collection: 'bills' },
 );
 
 module.exports = mongoose.model('Bill', billSchema);

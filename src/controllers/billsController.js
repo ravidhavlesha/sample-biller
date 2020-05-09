@@ -1,7 +1,8 @@
+const mongoose = require('mongoose');
 const Joi = require('joi');
 const apiResponse = require('../utils/apiResponse');
-const customerModel = require('../models/customerModel');
-const billModel = require('../models/billModel');
+const CustomerModel = require('../models/customerModel');
+const BillModel = require('../models/billModel');
 
 /**
  * Fetch bills by customer attribute
@@ -15,7 +16,7 @@ exports.fetchBills = async (req, res, next) => {
             Joi.object()
               .keys({
                 attributeName: Joi.string().valid(['name', 'mobileNumber']),
-                attributeValue: Joi.number().required(),
+                attributeValue: Joi.any(),
               })
               .required(),
           )
@@ -31,13 +32,14 @@ exports.fetchBills = async (req, res, next) => {
     const { customerIdentifiers } = req.body || {};
     const { attributeName, attributeValue } = (customerIdentifiers && customerIdentifiers[0]) || {};
 
-    const customerAndBills = await customerModel
-      .findOne({ [attributeName]: attributeValue }, { _id: false, name: true })
-      .populate({
-        path: 'bills',
-        match: { billStatus: 'OUTSTANDING' },
-        select: '-_id customerAccount aggregates billerBillID generatedOn recurrence amountExactness',
-      });
+    const customerAndBills = await CustomerModel.findOne(
+      { [attributeName]: attributeValue },
+      { _id: false, name: true },
+    ).populate({
+      path: 'bills',
+      match: { billStatus: 'OUTSTANDING' },
+      select: '-_id customerAccount aggregates billerBillID generatedOn recurrence amountExactness',
+    });
 
     if (!customerAndBills) {
       return apiResponse.dataNotFoundResponse(res, 'Customer');
@@ -45,7 +47,10 @@ exports.fetchBills = async (req, res, next) => {
 
     const { name, bills } = customerAndBills;
     const billFetchStatus = bills && bills.length ? 'AVAILABLE' : 'NO_OUTSTANDING';
-    return apiResponse.successResponse(res, 200, { customer: { name }, billDetails: { billFetchStatus, bills } });
+    return apiResponse.successResponse(res, 200, {
+      customer: { name },
+      billDetails: { billFetchStatus, bills },
+    });
   } catch (err) {
     return next(err);
   }
@@ -85,7 +90,7 @@ exports.fetchBillReceipt = async (req, res, next) => {
     const { billerBillID, platformBillID, paymentDetails } = req.body || {};
     const { platformTransactionRefID } = paymentDetails;
 
-    const bill = await billModel.findOne({ billerBillID }, { _id: true, billStatus: true });
+    const bill = await BillModel.findOne({ billerBillID }, { _id: true, billStatus: true });
 
     if (!bill) {
       return apiResponse.dataNotFoundResponse(res, 'Bill');
@@ -96,17 +101,12 @@ exports.fetchBillReceipt = async (req, res, next) => {
       return apiResponse.badRequestResponse(res, 'The requested bill was already paid in the biller system.');
     }
 
-    // We don't want MS.
-    let receiptDate = new Date();
-    receiptDate.setMilliseconds(0);
-    receiptDate = receiptDate.toISOString().replace('.000', '');
-
     const billPayment = {
       platformBillID,
       paymentDetails,
       receipt: {
         id: Math.random().toString(36).slice(2).toUpperCase(),
-        date: receiptDate,
+        date: new Date(),
       },
     };
 
@@ -129,52 +129,49 @@ exports.fetchBillReceipt = async (req, res, next) => {
 /**
  * Create customer and bills
  */
-// const mongoose = require('mongoose');
+exports.createBills = async (req, res, next) => {
+  try {
+    const customer = new CustomerModel({
+      _id: new mongoose.Types.ObjectId(),
+      name: 'Thor',
+      mobileNumber: Math.floor(Math.random() * 1000000000),
+    });
 
-// exports.createBills = async (req, res, next) => {
-//   try {
-//     const customer = new customerModel({
-//       _id: new mongoose.Types.ObjectId(),
-//       name: 'Thor',
-//       mobileNumber: Math.floor(Math.random() * 1000000000),
-//     });
+    return await customer.save(async () => {
+      const customerAccID = Math.floor(Math.random() * 10000000);
 
-//     customer.save(async () => {
-//       const customerAccID = Math.floor(Math.random() * 10000000);
+      const bill1 = await new BillModel({
+        aggregates: {
+          total: { amount: { value: Math.floor(Math.random() * 100000) }, displayName: 'Total Outstanding' },
+        },
+        billerBillID: Math.floor(Math.random() * 100000000),
+        generatedOn: new Date(),
+        recurrence: 'ONE_TIME',
+        amountExactness: 'EXACT',
+        customerAccount: { id: customerAccID },
+        customer: customer.id,
+      }).save();
 
-//       const bill1 = await new billModel({
-//         aggregates: {
-//           total: { amount: { value: Math.floor(Math.random() * 100000) }, displayName: 'Total Outstanding' },
-//         },
-//         billerBillID: Math.floor(Math.random() * 100000000),
-//         generatedOn: '2020-01-19T01:02:03Z',
-//         recurrence: 'ONE_TIME',
-//         amountExactness: 'EXACT',
-//         customerAccount: { id: customerAccID },
-//         customer: customer._id,
-//       }).save();
+      customer.bills.push(bill1);
 
-//       customer.bills.push(bill1);
+      const bill2 = await new BillModel({
+        aggregates: {
+          total: { amount: { value: Math.floor(Math.random() * 100000) }, displayName: 'Total Outstanding' },
+        },
+        billerBillID: Math.floor(Math.random() * 100000000),
+        generatedOn: new Date(),
+        recurrence: 'ONE_TIME',
+        amountExactness: 'EXACT',
+        customerAccount: { id: customerAccID },
+        customer: customer.id,
+      }).save();
 
-//       const bill2 = await new billModel({
-//         aggregates: {
-//           total: { amount: { value: Math.floor(Math.random() * 100000) }, displayName: 'Total Outstanding' },
-//         },
-//         billerBillID: Math.floor(Math.random() * 100000000),
-//         generatedOn: '2020-01-20T01:02:03Z',
-//         recurrence: 'ONE_TIME',
-//         amountExactness: 'EXACT',
-//         customerAccount: { id: customerAccID },
-//         customer: customer._id,
-//       }).save();
+      customer.bills.push(bill2);
 
-//       customer.bills.push(bill2);
-
-//       customer.save();
-//     });
-
-//     return res.send('Done');
-//   } catch (err) {
-//     return next(err);
-//   }
-// };
+      await customer.save();
+      return apiResponse.successResponse(res, 200, customer);
+    });
+  } catch (err) {
+    return next(err);
+  }
+};

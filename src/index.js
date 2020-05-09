@@ -20,7 +20,11 @@ app.listen(port, () => {
   console.log(`Biller system is listening on port ${port}`);
 });
 
-app.all('*', (req, res) => apiResponse.errorResponse(res, 404, { title: 'Page not found' }));
+app.all('*', (req, res) => apiResponse.errorResponse(res, 404, {
+  code: 'page-not-found',
+  title: 'Page not found',
+  description: 'The requested page is not found in biller system.',
+}));
 
 app.use((err, req, res, next) => {
   if (res.headersSent) {
@@ -29,7 +33,7 @@ app.use((err, req, res, next) => {
 
   if (err.name === 'UnauthorizedError') {
     console.error('Error: Authentication failed');
-    return apiResponse.errorResponse(res, 401, { title: 'Authentication failed' });
+    return apiResponse.errorResponse(res, 401, { code: 'auth-failed', title: 'Authentication failed' });
   }
 
   if (err.statusCode && err.statusCode === 400) {

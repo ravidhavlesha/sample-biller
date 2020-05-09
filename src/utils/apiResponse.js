@@ -11,12 +11,7 @@ const successResponse = (res, statusCode = 200, data = []) => {
 const errorResponse = (res, statusCode = 400, error = {}) => {
   const response = { status: statusCode, success: false };
 
-  if (error && Object.keys(error).length) {
-    if (!error.code) {
-      error.code = (error.title || '').replace(' ', '-').toLowerCase();
-    }
-    response.error = error;
-  }
+  response.error = error && Object.keys(error).length ? error : null;
 
   return res.status(statusCode).json(response);
 };
@@ -25,7 +20,11 @@ const serverErrorResponse = (res, statusCode = 500) => {
   const response = {
     status: statusCode,
     success: false,
-    error: { code: 'server-error', title: 'Something went wrong' },
+    error: {
+      code: 'server-error',
+      title: 'Something went wrong',
+      description: 'There is some issue with the billder system.',
+    },
   };
 
   return res.status(statusCode).json(response);
@@ -40,10 +39,7 @@ const badRequestResponse = (res, desc = null) => errorResponse(res, 400, {
 const dataNotFoundResponse = (res, model) => errorResponse(res, 404, {
   code: `${model.toLowerCase()}-not-found`,
   title: `${model} not found`,
-  traceID: '',
   description: `The requested ${model.toLowerCase()} was not found in the biller system.`,
-  param: '',
-  docURL: '',
 });
 
 module.exports = {
