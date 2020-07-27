@@ -1,7 +1,7 @@
 # Sample Biller System
 
 A sample biller system implementation for finding outstanding customer bills and marking them paid with return receipt. 
-This system is built with **NodeJS**, **MongoDB** and is hosted on **Vercel**.
+This system is built with **NodeJS**, and **MongoDB**.
 
 ## Getting Started
 
